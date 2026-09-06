@@ -120,5 +120,5 @@ fi
 
 dpkg-deb --info "$output_dir/$package_name"
 dpkg-deb --contents "$output_dir/$package_name" >/dev/null
-sha256sum "$output_dir/$package_name" > "$output_dir/SHA256SUMS"
+(cd "$output_dir" && sha256sum "$package_name" > SHA256SUMS)
 printf 'Maximum required glibc symbol: %s\n' "$max_glibc"
