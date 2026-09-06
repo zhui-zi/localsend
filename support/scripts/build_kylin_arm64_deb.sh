@@ -48,17 +48,17 @@ install -d "$package_root/opt/localsend" "$package_root/usr/bin" \
   "$package_root/DEBIAN"
 cp -a "$bundle_dir/." "$package_root/opt/localsend/"
 
-for library in \
-  libayatana-appindicator3.so.1 \
-  libayatana-indicator3.so.7 \
-  libayatana-ido3-0.4.so.0 \
-  libdbusmenu-glib.so.4 \
-  libdbusmenu-gtk3.so.4; do
-  library_path="$(ldconfig -p | awk -v name="$library" '$1 == name { print $NF; exit }')"
-  if [[ -z "$library_path" ]]; then
-    echo "Missing runtime library: $library" >&2
-    exit 1
-  fi
+mapfile -t tray_libraries < <(
+  ldd "$bundle_dir/lib/libtray_manager_plugin.so" \
+    | awk '$2 == "=>" && $3 ~ /^\// && $1 ~ /(appindicator|indicator|dbusmenu|ido)/ { print $1 "|" $3 }'
+)
+if [[ "${#tray_libraries[@]}" -eq 0 ]]; then
+  echo "No tray indicator runtime libraries were detected." >&2
+  exit 1
+fi
+for entry in "${tray_libraries[@]}"; do
+  library="${entry%%|*}"
+  library_path="${entry#*|}"
   cp -aL "$library_path" "$package_root/opt/localsend/lib/$library"
 done
 
