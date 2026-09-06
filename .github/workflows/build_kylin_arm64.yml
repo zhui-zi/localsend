@@ -1,0 +1,38 @@
+name: Build Kylin ARM64 package
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04-arm
+    container:
+      image: ubuntu:20.04
+
+    steps:
+      - name: Install build tools
+        env:
+          DEBIAN_FRONTEND: noninteractive
+        run: |
+          apt-get update
+          apt-get install -y \
+            binutils build-essential ca-certificates clang cmake curl dpkg-dev file git \
+            libayatana-appindicator3-dev libgtk-3-dev ninja-build pkg-config unzip xdg-user-dirs \
+            xz-utils zip
+
+      - uses: actions/checkout@v6
+
+      - name: Install Rust
+        run: |
+          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal
+          echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
+
+      - name: Build package
+        run: bash support/scripts/build_kylin_arm64_deb.sh
+
+      - uses: actions/upload-artifact@v6
+        with:
+          name: localsend-kylin-v10-feiteng-d2000-arm64
+          path: dist-kylin/*
+          if-no-files-found: error
+
